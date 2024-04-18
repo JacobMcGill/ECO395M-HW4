@@ -1,37 +1,211 @@
 ---
 title: "ECO395M HW 4"
-output: html_document
-date: "2024-04-08"
+output: word_document
+date: "`r Sys.Date()`"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, include=FALSE}
+## put packages and data here
+library(tidyverse)  
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(cluster)
+library(rsample)
+library(mosaic)
+library(reshape2)  
+library(foreach)
+library(caret)
+socialmarketing <- read.csv("~/Downloads/social_marketing.csv")
+socialmarketing <- socialmarketing %>% select(-c(spam, adult, uncategorized, chatter))
+non_numeric_cols <- socialmarketing %>% 
+  summarise_all(~ any(!is.na(.) & !is.numeric(.))) %>%
+  gather() %>%
+  filter(value)
+
+
+```
+
 # Question 1
 
 # Question 2
+
+## Introduction and Data Cleaning
+
+This report analyzes social media interactions from followers of the NutrientH20 brand, using data collected over a seven-day period in June 2014. The goal is to identify distinct market segments within the social media audience to enhance targeted marketing strategies. By examining the categorized Twitter posts of these followers, this analysis seeks to uncover patterns and insights that could inform more effective and engaging marketing campaigns.
+
+For simplicity, as part of the data cleaning process I have removed three variables from the dataset: 'Spam', 'Adult' and 'Uncategorized'. The rationale for this decision is that the "Spam", "Uncategorized", and "Chatter" variables will not help us in identifying and targeting specific market segments, which is the purpose of this endeavor. While, the "Adult" variable may be useful in identifying a specific market segment that could be targeted on certain NSFW websites, I have removed it in order to ensure a PG rating for this academic project. 
+
+## Initial EDA
+
+```{r, echo=FALSE}
+
+category_summary <- socialmarketing %>%
+  select(-X) %>%
+  summarise_all(sum)
+category_summary_long <- pivot_longer(category_summary, cols = everything(), names_to = "Category", values_to = "Mentions")
+
+category_summary_long <- category_summary_long  %>%
+  arrange(desc(Mentions))
+
+ggplot(category_summary_long, aes(x = reorder(Category, -Mentions), y = Mentions)) +
+  geom_bar(stat = "identity", fill = "dodgerblue") +
+  theme_minimal() +
+  labs(title = "Number of Mentions by Category", x = "Category", y = "Number of Mentions") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Beginning with a general preliminary data exploration, we see the number of mentions by category in Twitter posts by NutrientH20's followers over the surveyed period. We can see a high volume of posts related to photo sharing and health and nutrition, followed by cooking, politics, sports, etc. This visualisation indicates that NurtientH20's following tends to be interested in a health and wellness oriented, fitness-concsious, active lifestyle. In order to conduct a more detailed analysis and identify market segments within the brand's following, we will now utilize a correlation heatmap to visualize the relationship between categories, then use clustering to partition the brand's folllowing into segents based on similarities across individuals. 
+
+## Market Segmentation: Correlation Heatmap
+```{r, echo=FALSE, fig.width=7, fig.height=5, fig.keep="all", warning=FALSE}
+correlations <- cor(socialmarketing %>% select(-X), use = "pairwise.complete.obs")
+
+high_correlations <- which(abs(correlations) > 0.4 & upper.tri(correlations, diag = FALSE), arr.ind = TRUE)
+
+# Extract indices of high correlations
+high_correlation_indices <- data.frame(row = rownames(correlations)[high_correlations[, 1]],
+                                       col = colnames(correlations)[high_correlations[, 2]])
+
+# Create a new correlation matrix with only high correlations
+high_correlation_matrix <- correlations[high_correlation_indices$row, high_correlation_indices$col]
+
+heatmap <- ggplot(melt(high_correlation_matrix), aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) +
+  theme_minimal() +
+  labs(title = "High Correlation Heatmap", x = "Category", y = "Category", fill = "Correlation") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+
+print(heatmap)
+```
+We utilized a heatmap to visualize correlation between categories of interest as an initial step in the segmentation process. We see the strongest correlations between personal fitness & health and nutrition, beauty & fashion, beauty & cooking, religion & parenting, and religion & sports fandom (an interesting combination). Understanding these correlation gives us a clearer picture of which categories may be linked as shared interests, giving us a foundation for the next phase. We will now utilize clustering to group individuals into distinct segments based on the similarity of their interests, enabling us to craft tailored strategies for each unique cluster.
+
+## Market Segmentation: Clustering
+```{r, echo=FALSE, fig.width=7, fig.height=5, fig.keep="all", warning=FALSE}
+
+socialmarketingx <- socialmarketing %>% select(-X)
+
+k_grid <- seq(2, 10, by = 1) 
+
+SSE_grid <- foreach(k = k_grid, .combine = 'c') %do% {
+  kmeans_model <- kmeans(socialmarketingx, k, nstart = 50)
+  kmeans_model$tot.withinss
+}
+
+plot(k_grid, SSE_grid, type = "b", pch = 19, frame = FALSE, 
+     xlab = "Number of Clusters (K)", ylab = "Total Within-Cluster Sum of Squares (WCSS)",
+     main = "Elbow Method for Optimal K")
+
+# Perform k-means clustering
+set.seed(123)  # for reproducibility
+k <- 3  # number of clusters, you can adjust this
+kmeans_model <- kmeans(socialmarketingx, centers = 5)
+
+socialmarketing_clustered <- cbind(socialmarketing, Cluster = kmeans_model$cluster)
+
+# View the cluster centroids
+cluster_centroids <- kmeans_model$centers
+
+# Convert cluster centroids to a data frame
+cluster_centroids_df <- as.data.frame(cluster_centroids)
+
+# Add cluster labels to the cluster centroids data frame
+
+cluster_centroids_df$Cluster <- factor(1:nrow(cluster_centroids_df)) 
+
+cluster_centroids_long <- pivot_longer(cluster_centroids_df, cols = -Cluster, names_to = "Category", values_to = "Mean")
+
+top_categories_per_cluster <- cluster_centroids_long %>%
+  group_by(Cluster) %>%
+  top_n(5, Mean) %>%  # Adjust this number to get more or fewer top categories
+  arrange(Cluster, desc(Mean))
+
+ggplot(top_categories_per_cluster, aes(x = reorder(Category, Mean), y = Mean, fill = Cluster)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  facet_wrap(~ Cluster, scales = "free_x") +
+  theme_minimal() +
+  labs(title = "Top Categories by Cluster", x = "Category", y = "Mean Value") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Market Segments and Potential Target Strategies
+
+```{r, echo=FALSE, fig.width=9, fig.height=5, fig.keep="all", warning=FALSE}
+
+cluster_names <- c("The Mixed Bag", "Fashionistas and Foodies", "Faith, Football, and Family", 
+                   "Health and Fitness Enthusiasts", "College Gamers")
+cluster_centroids_df$ClusterName <- cluster_names
+
+top_categories_per_cluster <- inner_join(top_categories_per_cluster, cluster_centroids_df, by = "Cluster")
+
+ggplot(top_categories_per_cluster, aes(x = reorder(Category, Mean), y = Mean, fill = Cluster)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 2)) +
+  facet_wrap(~ ClusterName, scales = "free_x") +  
+  theme_minimal() +
+  labs(title = "Top Categories by Cluster", x = "Category", y = "Mean Value") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+## College Gamers
+
+The 'College Gamers' cluster exhibits a strong affinity towards gaming and collegiate life. They are tech-savvy, connected, and actively participate in online communities related to their interests.
+
+### Marketing Strategies:
+
+* **Partner With Streamers** Partner with popular Twitch streamers to facilitate product placement. 
+* **Engage with eSports:** Sponsor eSports teams and tournaments to advertise at events.
+* **Campus Events and Student Discounts:** Sponsor on-campus events to boost brand visibility.
+
+## Health and Fitness Enthusiasts
+
+Members of the 'Health and Fitness Enthusiasts' cluster are deeply invested in their personal fitness, healthy diet, and overall active lifestyle. 
+
+### Marketing Strategies
+
+* **Parnter with Fitness Influencers and Publications** Partner with fitness influencers and publications such as Men's Health to boost brand's reputation among health-conscious people.
+* **Release a Healthier Version:** Develop and release a healthier version of the product, emphasizing its low-sugar content and non-use of artificial dyes and coloring. 
+* **Sponsor Gyms, Yoga Studios, and Community Fitness Events ** Showcase the brand in gyms, yoga studios, and community fitness events (Longhorn Run!) to strengthen brand recognition and attract new customers who are passionate about fitness. 
+
+## Faith, Football, and Family
+
+The 'Faith, Football, and Family' cluster values community, shared experiences, and has a strong interest in sports and family-centric activities.
+
+### Marketing Strategies
+
+* **Youth Sports Sponsorships:** Sponsor local sports teams and tournaments, providing branded hydration stations at events. This highlights the beverage's benefit to athletes while emphasizing the brand's commitment to community values. 
+* **Targeted Commercial Advertising:** Advertise during commercial breaks of major sports events, like Monday Night Football or March Madness. 
+* **Charitable Partnerships:** Partner with religious organizations or charities to donate a portion of sales during specific holidays. Widely promote this partnership to further emphasize the brand's commitment to supporting local communities. 
+
+## Fashionistas and Foodies
+
+### Description
+
+The 'Fashionistas and Foodies' cluster displayed a strong interest in the culinary arts, beauty, and fashion, indicating that they appreciate the finer things in life. Their significant interest in photo-sharing indicates a proclivity for visually documenting their culinary experiences or fasion choices. 
+
+### Marketing Strategies
+
+* **Influencer Partnerships:** Collaborate with fashion and food influencers to promote the brand by integrating the product into their lifestyle content narratives. 
+* **Limited Edition 'Artist Series' Bottles:** Collaborate with artists to create a limited edition bottles that are visually stunning and collectible, then promote the bottle through notable influencers and celebrities in the fashion and culinary world. 
+* **Paris Fashion Week: Hydration Partner** Align with Paris Fashion Week to become the Official Hydration Partner, featuring the 'Artist Series' bottles throughout the event.
+
+## The Mixed Bag
+
+The 'Mixed Bag' cluster presents a varied set of interests, suggesting a demographic that is not easily categorized but is open to a wide array of products and experiences. Versatile and wide-ranging marketing strategies will be needed for this cluster. 
+
+### Marketing Strategies
+
+* **Podcast Ad Reads:** Secure advertising partnerships with a variety of podcasts across genres including politics, current events, and travel.
+* **Broad Social Media Ad Camaign:** Run a general ad campaign across multiple social media platforms, targeting a wide range of interests and demographics to maximize reach and brand visibility.
 
 # Question 3
 
 # Question 4
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
