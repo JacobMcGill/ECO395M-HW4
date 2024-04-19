@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include=FALSE}
 ## put packages and data here
+library(stats)
+library(factoextra)
 library(tidyverse)  
 library(dplyr)
 library(ggplot2)
@@ -20,6 +22,7 @@ library(mosaic)
 library(reshape2)  
 library(foreach)
 library(caret)
+wine = read.csv('C://Users//musab//Downloads//wine.csv', header = TRUE)
 socialmarketing <- read.csv("~/Downloads/social_marketing.csv")
 socialmarketing <- socialmarketing %>% select(-c(spam, adult, uncategorized, chatter))
 non_numeric_cols <- socialmarketing %>% 
@@ -31,6 +34,70 @@ non_numeric_cols <- socialmarketing %>%
 ```
 
 # Question 1
+---
+title: "HW4.Q1"
+output: word_document
+date: "2024-04-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#Since we are only interested in the chemical properties for PCA and clustering,we will exclude the last two columns (quality and color)
+wine_chem = wine[, 1:11]
+
+# Apply PCA
+pca_results <- prcomp(wine_chem, scale. = TRUE, center = TRUE)
+
+# Visualizing it
+fviz_pca_ind(pca_results,
+             col.ind = wine$color, # Color by wine color
+             palette = c("#00AFBB", "#E7B800"),
+             addEllipses = TRUE,
+             legend.title = "Wine Color")
+
+```
+The PCA plot shows individuals represented in the space defined by the first two principal components. The color coding represents the type of wine, where one can clearly see a distinct grouping of red and white wines, indicating that the PCA is able to distinguish between red and white wines using the chemical properties alone.
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Clustering with k-means 
+set.seed(123) 
+kmeans_results <- kmeans(scale(wine_chem), centers = 3, nstart = 25)
+
+# Visualize clusters
+fviz_cluster(kmeans_results, data = wine_chem,
+             ellipse.type = "convex",
+             palette = c("#2E9FDF", "#00AFBB", "#E7B800"),
+             ggtheme = theme_minimal())
+
+```
+The PCA biplot adds vectors for the chemical properties, showing their contribution to the two principal components. The separation between red and white wines appears significant along the first principal component, suggesting that some of these chemical properties are influential in differentiating wine color. However, there's no direct indication of wine quality in this plot
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# To color the points by actual wine color or quality
+wine$color_numeric <- as.numeric(factor(wine$color))
+# Plot PCA 
+fviz_pca_biplot(pca_results,
+                col.ind = wine$color_numeric, # Color by wine color
+                col.var = "contrib", # Color variables by their contribution
+                gradient.cols = c("#00AFBB", "#E7B800"),
+                legend.title = "Wine Color")
+```
+he cluster plot reveals how the data points have been grouped based on the k-means clustering algorithm. The clusters seem to form distinct groups, but without a clear separation that would correspond to wine type (red vs. white). It's less clear than the PCA if the clusters align with wine color.
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# we will also use fviz_cluster to color the points by quality score:
+wine$quality_factor <- factor(wine$quality)
+
+# Plotting with quality as a discrete factor
+fviz_cluster(kmeans_results, data = wine_chem,
+             ellipse.type = "convex",
+             geom = "point", 
+             ggtheme = theme_minimal()) +
+  geom_point(aes(color = wine$quality_factor)) 
+```
+his plot shows a k-means clustering with nine clusters. It's a bit more difficult to interpret because the clusters are not clearly separated, and they don't seem to correlate with a single variable like wine color or quality. Instead, the clusters appear to be based on more subtle combinations of the chemical properties.
+
+#PCA outperforms other methods in distinguishing red from white wines due to clear separation and interpretable chemical property contributions. Quality distinction, however, is less evident, as it's subjectively rated and not solely dependent on chemical makeup. PCA's effectiveness in differentiating wine color suggests significant chemical profile variances between red and white wines. Yet, for nuanced aspects like quality, additional variables and advanced analysis techniques may be necessary.
 
 # Question 2
 
