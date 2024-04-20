@@ -272,6 +272,48 @@ The 'Mixed Bag' cluster presents a varied set of interests, suggesting a demogra
 
 # Question 3
 
+First, we will upload the txt file "Groceries" and read it as a transaction in order for arules to interact with it. To determine how to apply the a prior algorithm, I am going to look at a summary of the transactions.
+```{r, include = FALSE}
+library(tidyverse)
+library(igraph) 
+library(arules)
+library(arulesViz)
+
+groceries = read.transactions("C:/Users/jacob/Downloads/groceries.txt", sep = ",")
+```
+
+```{r, echo = FALSE}
+summary(groceries)
+```
+Based on the above results, I am going to limit the length of rules to a max length of 10. There are slightly below 10,000 transactions in the rules, so I am going to set support at a minimuk value of 0.01 and confidence at 0.1.
+```{r, include = FALSE}
+groc_rules = apriori(groceries, 
+                     parameter=list(support=.01, confidence=.1, maxlen=10))
+```
+```{r, echo = FALSE}
+inspect(groc_rules)
+```
+This produces about 435 rules, including 8 where the lhs is an empty subset. These rules graph against confidence and support, with color varying representing lift is shown below
+```{r, echo = FALSE, message = FALSE}
+plot(groc_rules)
+```
+Looking at the graph, the rules with the strongest lift appear to be between 0 < support < 0.05 and 0 < confidence < 0.6. The lift ranges from 1 to just above 3. To hone in on more interesting rules, I am going to limit the analysis to a subset of rules with confidence of at least 0.3 and a lift of at least 2.5, so that we are looking at the rules in the upper left part of the above graph. I chose this because the spread of rules is more sparse, so we may some more interesting connections.
+```{r, echo = FALSE}
+groc_sub = subset(groc_rules, subset=lift > 2 & confidence > 0.3)
+inspect(groc_sub, arrange = ascending(lift))
+```
+This rule mining found some interesting relationships. For example, {citrus fruit, other vegetables} => {root vegetables} has a lift of 3.295 and a confidence of 0.359 and {other vegetables, tropical fruit} => {root vegetables} has a lift of 3.144 and a confidence of about 0.343. These connections also make sense. For example, the rule {beef} => {root vegetables} has a relatively strong lift compared to the rest of the rules, coming in at 3.04. Considering that beef is often cooked with root vegetables like carrots (such as in stews or pot roasts). Furthermore, several rules show relationships between dairy products and fruit products (such as between curds and yogurt, or vegetables and butter). Finally, I am going to visualize the relationship between the goods in the transactions using Gephi. After
+
+```{r, include = FALSE}
+groceries_graph = associations2igraph(subset(groc_rules, lift>2), associationsAsNodes = FALSE)
+igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml")
+```
+
+```{r, echo = FALSE}
+knitr::include_graphics("C://Users/jacob/OneDrive/Documents/ECO395M-HW4/screenshot_final.png")
+```
+As can be seen, the most connected items in the transactions I filtered for are root vegetables, whole milk, and other vegetables. The most peripheral are berries and cream cheese, their only connection being with yogurt.
+
 # Question 4
 
 
