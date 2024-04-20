@@ -14,8 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Question 3
 
-# Question 4
-
 First, we will upload the txt file "Groceries" and read it as a transaction in order for arules to interact with it. To determine how to apply the a prior algorithm, I am going to look at a summary of the transactions.
 ```{r, include = FALSE}
 library(tidyverse)
@@ -58,7 +56,7 @@ knitr::include_graphics("C://Users/jacob/OneDrive/Documents/ECO395M-HW4/screensh
 ```
 As can be seen, the most connected items in the transactions I filtered for are root vegetables, whole milk, and other vegetables. The most peripheral are berries and cream cheese, their only connection being with yogurt.
 
-```
+# Question 4
 
 ## R Markdown
 
