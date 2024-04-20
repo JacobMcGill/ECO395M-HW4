@@ -46,14 +46,18 @@ Looking at the graph, the rules with the strongest lift appear to be between 0 <
 groc_sub = subset(groc_rules, subset=lift > 2 & confidence > 0.3)
 inspect(groc_sub, arrange = ascending(lift))
 ```
-This rule mining found some interesting relationships. For example, {citrus fruit, other vegetables} => {root vegetables} has a lift of 3.295 and a confidence of 0.359 and {other vegetables, tropical fruit} => {root vegetables} has a lift of 3.144 and a confidence of about 0.343. These connections also make sense. For example, the rule {beef} => {root vegetables} has a relatively strong lift compared to the rest of the rules, coming in at 3.04. Considering that beef is often cooked with root vegetables like carrots (such as in stews or pot roasts). Furthermore, several rules show relationships between dairy products and fruit products (such as between curds and yogurt, or vegetables and butter).
+This rule mining found some interesting relationships. For example, {citrus fruit, other vegetables} => {root vegetables} has a lift of 3.295 and a confidence of 0.359 and {other vegetables, tropical fruit} => {root vegetables} has a lift of 3.144 and a confidence of about 0.343. These connections also make sense. For example, the rule {beef} => {root vegetables} has a relatively strong lift compared to the rest of the rules, coming in at 3.04. Considering that beef is often cooked with root vegetables like carrots (such as in stews or pot roasts). Furthermore, several rules show relationships between dairy products and fruit products (such as between curds and yogurt, or vegetables and butter). Finally, I am going to visualize the relationship between the goods in the transactions using Gephi. After
 
-plot(groc_rules)
-inspect(subset(groc_rules, subset=lift > 3))
-inspect(subset(groc_rules, subset=confidence > 0.6))
-inspect(subset(groc_rules, subset=lift > 2 & confidence > 0.5))
+```{r, include = FALSE}
 groceries_graph = associations2igraph(subset(groc_rules, lift>2), associationsAsNodes = FALSE)
 igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml")
+```
+
+```{r, echo = FALSE}
+knitr::include_graphics("C://Users/jacob/OneDrive/Documents/ECO395M-HW4/screenshot_final.png")
+```
+As can be seen, the most connected items in the transactions I filtered for are root vegetables, whole milk, and other vegetables. The most peripheral are berries and cream cheese, their only connection being with yogurt.
+
 ```
 
 ## R Markdown
