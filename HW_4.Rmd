@@ -22,6 +22,10 @@ library(mosaic)
 library(reshape2)  
 library(foreach)
 library(caret)
+library(igraph) 
+library(arules)
+library(arulesViz)
+groceries = read.transactions("C:/Users/jacob/Downloads/groceries.txt", sep = ",")
 wine = read.csv('C://Users//musab//Downloads//wine.csv', header = TRUE)
 socialmarketing <- read.csv("~/Downloads/social_marketing.csv")
 socialmarketing <- socialmarketing %>% select(-c(spam, adult, uncategorized, chatter))
@@ -95,9 +99,9 @@ fviz_cluster(kmeans_results, data = wine_chem,
              ggtheme = theme_minimal()) +
   geom_point(aes(color = wine$quality_factor)) 
 ```
-his plot shows a k-means clustering with nine clusters. It's a bit more difficult to interpret because the clusters are not clearly separated, and they don't seem to correlate with a single variable like wine color or quality. Instead, the clusters appear to be based on more subtle combinations of the chemical properties.
+This plot shows a k-means clustering with nine clusters. It's a bit more difficult to interpret because the clusters are not clearly separated, and they don't seem to correlate with a single variable like wine color or quality. Instead, the clusters appear to be based on more subtle combinations of the chemical properties.
 
-#PCA outperforms other methods in distinguishing red from white wines due to clear separation and interpretable chemical property contributions. Quality distinction, however, is less evident, as it's subjectively rated and not solely dependent on chemical makeup. PCA's effectiveness in differentiating wine color suggests significant chemical profile variances between red and white wines. Yet, for nuanced aspects like quality, additional variables and advanced analysis techniques may be necessary.
+PCA outperforms other methods in distinguishing red from white wines due to clear separation and interpretable chemical property contributions. Quality distinction, however, is less evident, as it's subjectively rated and not solely dependent on chemical makeup. PCA's effectiveness in differentiating wine color suggests significant chemical profile variances between red and white wines. Yet, for nuanced aspects like quality, additional variables and advanced analysis techniques may be necessary.
 
 # Question 2
 
@@ -272,20 +276,12 @@ The 'Mixed Bag' cluster presents a varied set of interests, suggesting a demogra
 
 # Question 3
 
-First, we will upload the txt file "Groceries" and read it as a transaction in order for arules to interact with it. To determine how to apply the a prior algorithm, I am going to look at a summary of the transactions.
-```{r, include = FALSE}
-library(tidyverse)
-library(igraph) 
-library(arules)
-library(arulesViz)
-
-groceries = read.transactions("C:/Users/jacob/Downloads/groceries.txt", sep = ",")
-```
+To mine for rules from the grocery transactions, I will first upload the txt file "Groceries" and read it as a transaction in order for arules to interact with it. To determine how to apply the a prior algorithm, I am going to look at a summary of the transactions.
 
 ```{r, echo = FALSE}
 summary(groceries)
 ```
-Based on the above results, I am going to limit the length of rules to a max length of 10. There are slightly below 10,000 transactions in the rules, so I am going to set support at a minimuk value of 0.01 and confidence at 0.1.
+Based on the above results, I am going to limit the length of rules to a max length of 10. There are slightly below 10,000 transactions in the rules, so I am going to set support at a minimum value of 0.01 and confidence at 0.1.
 ```{r, include = FALSE}
 groc_rules = apriori(groceries, 
                      parameter=list(support=.01, confidence=.1, maxlen=10))
@@ -297,12 +293,12 @@ This produces about 435 rules, including 8 where the lhs is an empty subset. The
 ```{r, echo = FALSE, message = FALSE}
 plot(groc_rules)
 ```
-Looking at the graph, the rules with the strongest lift appear to be between 0 < support < 0.05 and 0 < confidence < 0.6. The lift ranges from 1 to just above 3. To hone in on more interesting rules, I am going to limit the analysis to a subset of rules with confidence of at least 0.3 and a lift of at least 2.5, so that we are looking at the rules in the upper left part of the above graph. I chose this because the spread of rules is more sparse, so we may some more interesting connections.
+Looking at the graph, the rules with the strongest lift appear to be between 0 < support < 0.05 and 0 < confidence < 0.6. The lift ranges from 1 to just above 3. To hone in on more interesting/informative rules, I am going to limit the analysis to a subset of rules with confidence of at least 0.3 and a lift of at least 2.5, so that we are looking at the rules in the upper left part of the above graph. I chose this because the spread of rules is more sparse, so we may some more interesting connections. I also chose this lift to focus on rules that provide more useful rules, since lift measures the increases in probability of the lhs event given the rhs event.
 ```{r, echo = FALSE}
 groc_sub = subset(groc_rules, subset=lift > 2 & confidence > 0.3)
 inspect(groc_sub, arrange = ascending(lift))
 ```
-This rule mining found some interesting relationships. For example, {citrus fruit, other vegetables} => {root vegetables} has a lift of 3.295 and a confidence of 0.359 and {other vegetables, tropical fruit} => {root vegetables} has a lift of 3.144 and a confidence of about 0.343. These connections also make sense. For example, the rule {beef} => {root vegetables} has a relatively strong lift compared to the rest of the rules, coming in at 3.04. Considering that beef is often cooked with root vegetables like carrots (such as in stews or pot roasts). Furthermore, several rules show relationships between dairy products and fruit products (such as between curds and yogurt, or vegetables and butter). Finally, I am going to visualize the relationship between the goods in the transactions using Gephi. After
+This rule mining found some interesting relationships. For example, {citrus fruit, other vegetables} => {root vegetables} has a lift of 3.295 and a confidence of 0.359. Although root vegetables only occur with a 0.359 probability given a transaction contains citrus and other fruit, its probability increases by more than 3 times given that event occurs.  and {other vegetables, tropical fruit} => {root vegetables} has a lift of 3.144 and a confidence of about 0.343. These connections also make sense. For example, the rule {beef} => {root vegetables} has a relatively strong lift compared to the rest of the rules, coming in at 3.04. Considering that beef is often cooked with root vegetables like carrots (such as in stews or pot roasts). Furthermore, several rules show relationships between dairy products and fruit products (such as between curds and yogurt, or vegetables and butter). Finally, I am going to visualize the relationship between the goods in the transactions using Gephi.
 
 ```{r, include = FALSE}
 groceries_graph = associations2igraph(subset(groc_rules, lift>2), associationsAsNodes = FALSE)
@@ -315,6 +311,9 @@ knitr::include_graphics("C://Users/jacob/OneDrive/Documents/ECO395M-HW4/screensh
 As can be seen, the most connected items in the transactions I filtered for are root vegetables, whole milk, and other vegetables. The most peripheral are berries and cream cheese, their only connection being with yogurt.
 
 # Question 4
+```{python, include = FALSE}
+
+```
 
 
 
