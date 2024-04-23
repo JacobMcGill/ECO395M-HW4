@@ -443,7 +443,7 @@ for epoch in range(num_epochs):
                     test_images, test_labels = next(trainiter)
                 train_images, train_labels = train_images.to(device), train_labels.to(device)
 
-                imshow(torchvision.utils.make_grid(test_images[:8].cpu()))
+                imshow(torchvision.utils.make_grid(train_images[:8].cpu()))
                 train_outputs = net(train_images[:8])
                 _, predicted = torch.max(train_outputs, 1)
                 print(' '.join('%5s' % dataset.classes[labels[j]] for j in range(batch_size)))
