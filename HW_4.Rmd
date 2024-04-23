@@ -316,7 +316,7 @@ As can be seen, the most connected items in the transactions I filtered for are 
 
 ## Model Training
 
-To train the classification model, I will set the batch size to 4 and train a CNN with 4 training epochs on the training set using PyTorch. I will measure the model performance by the finding the proportion of images it correctly classifies out of the entire set. The loss function will be CrossEntropyLoss.() and the optimizer function optim.Adam(net.parameters()). Also, to observe the change in the model's accuracy, every 5000 iterations the model will print a sample of the training set and its predictions for the data.
+To train the classification model, I will set the batch size to 4 and train a CNN with 4 training epochs on the training set using PyTorch. I will measure the model performance by the finding the proportion of images it correctly classifies out of the entire set. The loss function will be CrossEntropyLoss.() and the optimizer function optim.Adam(net.parameters()). 
 ```{python, include = FALSE}
 # Necessary Imports
 import torch
@@ -345,7 +345,7 @@ transform = transforms.Compose(
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])  # Normalize the images
 ```
 
-```{python, echo = FALSE}
+```{python, include = FALSE}
 # Load the training data
 dataset = ImageFolder(root=data_dir, transform=transform)
 #Create train test split
@@ -377,7 +377,7 @@ imshow(torchvision.utils.make_grid(images))
 # Print labels
 print(' '.join('%5s' % dataset.classes[labels[j]] for j in range(batch_size)))
 ```
-```{python, include = FALSE}
+```{python, include = FALSE, cache = TRUE}
 # Define CNN to classify photos
 
 class Net(nn.Module):
@@ -462,7 +462,7 @@ print('Finished Training')
 
 Now that the model is completed, we will test it on the test set.
 
-```{python, echo = FALSE}
+```{python, include = FALSE}
 # Set the model to evaluation mode
 net.eval()
 
@@ -503,8 +503,14 @@ accuracy = correct / total
 
 print(f'Accuracy on the test set: {accuracy:.2%}')
 ```
+```{python, echo = FALSE}
+# Compute accuracy
+accuracy = correct / total
 
-This finds that the model has a 73.46% accuracy rate on the test set, meaning it correctly classified 73.46% of the images. Finally, we will find the model's confusion matrix. Predicted labels run along the x axis and actual labels along the y axis.
+print(f'Accuracy on the test set: {accuracy:.2%}')
+```
+
+Finally, we will find the model's confusion matrix. Predicted labels run along the x axis and actual labels along the y axis.
 
 ```{python, echo = FALSE}
 # Convert labels to numerical values
