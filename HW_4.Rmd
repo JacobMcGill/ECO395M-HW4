@@ -1,7 +1,8 @@
 ---
-title: "ECO395M HW 4"
-output: word_document
-date: "`r Sys.Date()`"
+title: "HW4"
+authors: "Daniel Oliner, Musab Alquwaee, Jacob McGill"
+output: md_document
+date: "2024-04-23"
 ---
 
 ```{r setup, include=FALSE}
@@ -26,8 +27,8 @@ library(igraph)
 library(arules)
 library(arulesViz)
 groceries = read.transactions("C:/Users/jacob/Downloads/groceries.txt", sep = ",")
-wine = read.csv('C://Users//musab//Downloads//wine.csv', header = TRUE)
-socialmarketing <- read.csv("~/Downloads/social_marketing.csv")
+wine = read.csv('C:/Users/jacob/Downloads/wine.csv', header = TRUE)
+socialmarketing <- read.csv("C:/Users/jacob/Downloads/social_marketing.csv")
 socialmarketing <- socialmarketing %>% select(-c(spam, adult, uncategorized, chatter))
 non_numeric_cols <- socialmarketing %>% 
   summarise_all(~ any(!is.na(.) & !is.numeric(.))) %>%
@@ -35,17 +36,6 @@ non_numeric_cols <- socialmarketing %>%
   filter(value)
 
 
-```
-
-# Question 1
----
-title: "HW4.Q1"
-output: word_document
-date: "2024-04-15"
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -311,6 +301,10 @@ knitr::include_graphics("C://Users/jacob/OneDrive/Documents/ECO395M-HW4/screensh
 As can be seen, the most connected items in the transactions I filtered for are root vegetables, whole milk, and other vegetables. The most peripheral are berries and cream cheese, their only connection being with yogurt.
 
 # Question 4
+
+## Model Training
+
+To train the classification model, I will set the batch size to 4 and train a CNN with 4 training epochs on the training set using PyTorch. I will measure the model performance by the finding the proportion of images it correctly classifies out of the entire set. The loss function will be CrossEntropyLoss.() and the optimizer function optim.Adam(net.parameters()). Also, to observe the change in the model's accuracy, every 5000 iterations the model will print a sample of the training set and its predictions for the data.
 ```{python, include = FALSE}
 # Necessary Imports
 import torch
@@ -372,7 +366,7 @@ imshow(torchvision.utils.make_grid(images))
 print(' '.join('%5s' % dataset.classes[labels[j]] for j in range(batch_size)))
 ```
 ```{python, include = FALSE}
-# Let's define a simple CNN to classify photod
+# Define CNN to classify photos
 
 class Net(nn.Module):
     def __init__(self):
@@ -401,7 +395,6 @@ class Net(nn.Module):
 net = Net()
 print(net)
 ```
-
 ```{python, include = FALSE}
 # Set the device to GPU if available
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -413,7 +406,6 @@ optimizer = optim.Adam(net.parameters())
 num_epochs = 3
 trainiter = iter(train_loader)
 ```
-
 ```{python, echo = FALSE, message = FALSE}
 # Main training loop
 for epoch in range(num_epochs):
@@ -436,7 +428,7 @@ for epoch in range(num_epochs):
         if i % 5000 == 0:
             with torch.no_grad():
                 try:
-                    # Show a sample of images from the tran data and model's predictions
+                    # Show a sample of images from the training data and model's predictions
                     train_images, train_labels = next(trainiter)
                 except StopIteration:
                     trainiter = iter(test_loader)
@@ -454,6 +446,8 @@ for epoch in range(num_epochs):
 
 print('Finished Training')
 ```
+
+Now that the model is completed, we will test it on the test set.
 
 ```{python, echo = FALSE}
 # Set the model to evaluation mode
@@ -484,10 +478,12 @@ for images, labels in test_loader:
     # Update correct count
     correct += (predicted == labels).sum().item()
 
-# Store a batch of images, actual labels, and predicted labels
-    display_images.append(images.cpu())
+  # Update actual labels and predicted labels
     actual_labels.extend([dataset.classes[label] for label in labels])
     predicted_labels.extend([dataset.classes[label] for label in predicted])
+    
+  # Append a batch of images to the display_images list
+    display_images.append(images.cpu())
 
 # Compute accuracy
 accuracy = correct / total
@@ -495,65 +491,16 @@ accuracy = correct / total
 print(f'Accuracy on the test set: {accuracy:.2%}')
 ```
 
+This finds that the model has a 73.46% accuracy rate on the test set, meaning it correctly classified 73.46% of the images. Finally, we will find the model's confusion matrix. Predicted labels run along the x axis and actual labels along the y axis.
+
 ```{python}
-# Select a subset of images, actual labels, and predicted labels for display
-display_images = torch.cat(display_images)[:8]
-actual_labels = actual_labels[:8]
-predicted_labels = predicted_labels[:8]
+# Convert labels to numerical values
+label_to_index = {label: index for index, label in enumerate(dataset.classes)}
+true_indices = [label_to_index[label] for label in actual_labels]
+predicted_indices = [label_to_index[label] for label in predicted_labels]
 
-# Display selected images along with their actual and predicted labels
-imshow(torchvision.utils.make_grid(display_images))
-print('Actual Labels:', ' '.join('%5s' % label for label in actual_labels))
-print('Predicted Labels:', ' '.join('%5s' % label for label in predicted_labels))
-```
-
-
-```{python, echo = FALSE, results = "hide", fig.keep = "all"}
-# Set the model to evaluation mode
-net.eval()
-
-# Initialize lists to store true labels and predicted labels
-true_labels = []
-predicted_labels = []
-
-# Iterate through the test data loader
-for images, labels in test_loader:
-    # Move data to the device
-    images, labels = images.to(device), labels.to(device)
-    
-    # Forward pass
-    outputs = net(images)
-    
-    # Get predicted labels
-    _, predicted = torch.max(outputs, 1)
-    
-    # Append true labels and predicted labels to the lists
-    true_labels.extend(labels.cpu().numpy())
-    predicted_labels.extend(predicted.cpu().numpy())
-
-
-```
-
-
-```{python, echo=FALSE}
-# Show a sample of images from the test data and model's predictions
-train_images, train_labels = next(trainiter)
-trainiter = iter(test_loader)
-test_images, test_labels = next(trainiter)
-train_images, train_labels = train_images.to(device), train_labels.to(device)
-
-imshow(torchvision.utils.make_grid(train_images[:8].cpu()))
-train_outputs = net(train_images[:8])
-_, predicted = torch.max(train_outputs, 1)
-print(' '.join('%5s' % dataset.classes[labels[j]] for j in range(batch_size)))
-
-```
-
-
-
-```{python, echo = FALSE}
 # Compute the confusion matrix
-conf_matrix = confusion_matrix(true_labels, predicted_labels)
+conf_matrix = confusion_matrix(true_indices, predicted_indices)
 
 # Plot the confusion matrix using seaborn heatmap
 plt.figure(figsize=(10, 8))
@@ -563,5 +510,5 @@ plt.ylabel('Actual labels')
 plt.title('Confusion Matrix')
 plt.show()
 ```
-```
 
+As can be seen above, the majority of incorrectly identified classes are in the double digits. However, there were 221 cases where SeaLake was predicted and the actual value was forest and 189 cases where Permanent Crop was predicted but the actual value was HerbaceouVegetation.
