@@ -414,7 +414,7 @@ num_epochs = 3
 trainiter = iter(train_loader)
 ```
 
-```{python, echo = FALSE}
+```{python, echo = FALSE, message = FALSE}
 # Main training loop
 for epoch in range(num_epochs):
     running_loss = 0.0
@@ -440,7 +440,7 @@ for epoch in range(num_epochs):
                     train_images, train_labels = next(trainiter)
                 except StopIteration:
                     trainiter = iter(test_loader)
-                    test_images, test_labels = next(trainiter)
+                    train_images, test_labels = next(trainiter)
                 train_images, train_labels = train_images.to(device), train_labels.to(device)
 
                 imshow(torchvision.utils.make_grid(train_images[:8].cpu()))
@@ -463,6 +463,10 @@ net.eval()
 total = 0
 correct = 0
 
+display_images = []
+actual_labels = []
+predicted_labels = []
+
 # Iterate through the test data loader
 for images, labels in test_loader:
     # Move data to the device
@@ -480,13 +484,31 @@ for images, labels in test_loader:
     # Update correct count
     correct += (predicted == labels).sum().item()
 
+# Store a batch of images, actual labels, and predicted labels
+    display_images.append(images.cpu())
+    actual_labels.extend([dataset.classes[label] for label in labels])
+    predicted_labels.extend([dataset.classes[label] for label in predicted])
+
 # Compute accuracy
 accuracy = correct / total
 
 print(f'Accuracy on the test set: {accuracy:.2%}')
 ```
 
-```{python, echo = FALSE}
+```{python}
+# Select a subset of images, actual labels, and predicted labels for display
+display_images = torch.cat(display_images)[:8]
+actual_labels = actual_labels[:8]
+predicted_labels = predicted_labels[:8]
+
+# Display selected images along with their actual and predicted labels
+imshow(torchvision.utils.make_grid(display_images))
+print('Actual Labels:', ' '.join('%5s' % label for label in actual_labels))
+print('Predicted Labels:', ' '.join('%5s' % label for label in predicted_labels))
+```
+
+
+```{python, echo = FALSE, results = "hide", fig.keep = "all"}
 # Set the model to evaluation mode
 net.eval()
 
@@ -509,6 +531,27 @@ for images, labels in test_loader:
     true_labels.extend(labels.cpu().numpy())
     predicted_labels.extend(predicted.cpu().numpy())
 
+
+```
+
+
+```{python, echo=FALSE}
+# Show a sample of images from the test data and model's predictions
+train_images, train_labels = next(trainiter)
+trainiter = iter(test_loader)
+test_images, test_labels = next(trainiter)
+train_images, train_labels = train_images.to(device), train_labels.to(device)
+
+imshow(torchvision.utils.make_grid(train_images[:8].cpu()))
+train_outputs = net(train_images[:8])
+_, predicted = torch.max(train_outputs, 1)
+print(' '.join('%5s' % dataset.classes[labels[j]] for j in range(batch_size)))
+
+```
+
+
+
+```{python, echo = FALSE}
 # Compute the confusion matrix
 conf_matrix = confusion_matrix(true_labels, predicted_labels)
 
@@ -519,5 +562,6 @@ plt.xlabel('Predicted labels')
 plt.ylabel('Actual labels')
 plt.title('Confusion Matrix')
 plt.show()
+```
 ```
 
