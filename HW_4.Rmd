@@ -9,6 +9,7 @@ date: "2024-04-23"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#Question 1
 ```{r, include=FALSE}
 ## put packages and data here
 library(stats)
@@ -53,7 +54,9 @@ fviz_pca_ind(pca_results,
              legend.title = "Wine Color")
 
 ```
+
 The PCA plot shows individuals represented in the space defined by the first two principal components. The color coding represents the type of wine, where one can clearly see a distinct grouping of red and white wines, indicating that the PCA is able to distinguish between red and white wines using the chemical properties alone.
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Clustering with k-means 
 set.seed(123) 
@@ -66,7 +69,9 @@ fviz_cluster(kmeans_results, data = wine_chem,
              ggtheme = theme_minimal())
 
 ```
-The PCA biplot adds vectors for the chemical properties, showing their contribution to the two principal components. The separation between red and white wines appears significant along the first principal component, suggesting that some of these chemical properties are influential in differentiating wine color. However, there's no direct indication of wine quality in this plot
+
+The PCA biplot adds vectors for the chemical properties, showing their contribution to the two principal components. The separation between red and white wines appears significant along the first principal component, suggesting that some of these chemical properties are influential in differentiating wine color. However, there's no direct indication of wine quality in this plot.
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # To color the points by actual wine color or quality
 wine$color_numeric <- as.numeric(factor(wine$color))
@@ -77,7 +82,9 @@ fviz_pca_biplot(pca_results,
                 gradient.cols = c("#00AFBB", "#E7B800"),
                 legend.title = "Wine Color")
 ```
-he cluster plot reveals how the data points have been grouped based on the k-means clustering algorithm. The clusters seem to form distinct groups, but without a clear separation that would correspond to wine type (red vs. white). It's less clear than the PCA if the clusters align with wine color.
+
+The cluster plot reveals how the data points have been grouped based on the k-means clustering algorithm. The clusters seem to form distinct groups, but without a clear separation that would correspond to wine type (red vs. white). It's less clear than the PCA if the clusters align with wine color.
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # we will also use fviz_cluster to color the points by quality score:
 wine$quality_factor <- factor(wine$quality)
@@ -89,6 +96,7 @@ fviz_cluster(kmeans_results, data = wine_chem,
              ggtheme = theme_minimal()) +
   geom_point(aes(color = wine$quality_factor)) 
 ```
+
 This plot shows a k-means clustering with nine clusters. It's a bit more difficult to interpret because the clusters are not clearly separated, and they don't seem to correlate with a single variable like wine color or quality. Instead, the clusters appear to be based on more subtle combinations of the chemical properties.
 
 PCA outperforms other methods in distinguishing red from white wines due to clear separation and interpretable chemical property contributions. Quality distinction, however, is less evident, as it's subjectively rated and not solely dependent on chemical makeup. PCA's effectiveness in differentiating wine color suggests significant chemical profile variances between red and white wines. Yet, for nuanced aspects like quality, additional variables and advanced analysis techniques may be necessary.
@@ -276,14 +284,17 @@ Based on the above results, I am going to limit the length of rules to a max len
 groc_rules = apriori(groceries, 
                      parameter=list(support=.01, confidence=.1, maxlen=10))
 ```
-```{r, echo = FALSE}
+```{r, include = FALSE}
 inspect(groc_rules)
 ```
-This produces about 435 rules, including 8 where the lhs is an empty subset. These rules graph against confidence and support, with color varying representing lift is shown below
+This produces about 435 rules, including 8 where the lhs is an empty subset. These rules are graphed against confidence and support, with color varying representing lift, are shown below
+
 ```{r, echo = FALSE, message = FALSE}
 plot(groc_rules)
 ```
+
 Looking at the graph, the rules with the strongest lift appear to be between 0 < support < 0.05 and 0 < confidence < 0.6. The lift ranges from 1 to just above 3. To hone in on more interesting/informative rules, I am going to limit the analysis to a subset of rules with confidence of at least 0.3 and a lift of at least 2.5, so that we are looking at the rules in the upper left part of the above graph. I chose this because the spread of rules is more sparse, so we may some more interesting connections. I also chose this lift to focus on rules that provide more useful rules, since lift measures the increases in probability of the lhs event given the rhs event.
+
 ```{r, echo = FALSE}
 groc_sub = subset(groc_rules, subset=lift > 2 & confidence > 0.3)
 inspect(groc_sub, arrange = ascending(lift))
@@ -298,6 +309,7 @@ igraph::write_graph(groceries_graph, file='groceries.graphml', format = "graphml
 ```{r, echo = FALSE}
 knitr::include_graphics("C://Users/jacob/OneDrive/Documents/ECO395M-HW4/screenshot_final.png")
 ```
+
 As can be seen, the most connected items in the transactions I filtered for are root vegetables, whole milk, and other vegetables. The most peripheral are berries and cream cheese, their only connection being with yogurt.
 
 # Question 4
@@ -446,6 +458,7 @@ for epoch in range(num_epochs):
 
 print('Finished Training')
 ```
+## Model Testing
 
 Now that the model is completed, we will test it on the test set.
 
@@ -493,7 +506,7 @@ print(f'Accuracy on the test set: {accuracy:.2%}')
 
 This finds that the model has a 73.46% accuracy rate on the test set, meaning it correctly classified 73.46% of the images. Finally, we will find the model's confusion matrix. Predicted labels run along the x axis and actual labels along the y axis.
 
-```{python}
+```{python, echo = FALSE}
 # Convert labels to numerical values
 label_to_index = {label: index for index, label in enumerate(dataset.classes)}
 true_indices = [label_to_index[label] for label in actual_labels]
