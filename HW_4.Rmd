@@ -460,7 +460,7 @@ print('Finished Training')
 ```
 ## Model Testing
 
-Now that the model is completed, we will test it on the test set.
+Now that the model is completed, we will test its accuracy on the test set. Accuracy in this case is simply the percentage of images it correctly identified from the test set.
 
 ```{python, include = FALSE}
 # Set the model to evaluation mode
