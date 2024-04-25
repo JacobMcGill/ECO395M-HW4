@@ -530,4 +530,4 @@ plt.title('Confusion Matrix')
 plt.show()
 ```
 
-As can be seen above, the majority of incorrectly identified classes are in the double digits. However, there were 100 cases where PermanentCrop was predicted and the actual value was Vegetation.
+As can be seen above, the majority of incorrectly identified classes are in the double digits. However, there were 153 cases where Forest was predicted and the actual value was SeaLake.
