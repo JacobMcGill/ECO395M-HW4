@@ -372,16 +372,6 @@ Now that the model is completed, we will test it's accuracy on the test set. Acc
 
 Finally, we will find the model’s confusion matrix. The confusion matrix plots the number of images of certain class against how many of that class the model predicted. For example, it would list how many of the vegeation images from the test set the model classified as SeaLake. Predicted labels run along the x axis and actual labels along the y axis.
 
-    ## <Figure size 1000x800 with 0 Axes>
-
-    ## <Axes: >
-
-    ## Text(0.5, 58.7222222222222, 'Predicted labels')
-
-    ## Text(95.7222222222222, 0.5, 'Actual labels')
-
-    ## Text(0.5, 1.0, 'Confusion Matrix')
-
 <img src="HW_4_files/figure-markdown_strict/unnamed-chunk-25-23.png" width="960" />
 
 As can be seen above, the majority of incorrectly identified classes are
