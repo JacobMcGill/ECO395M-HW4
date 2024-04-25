@@ -370,8 +370,7 @@ Now that the model is completed, we will test it's accuracy on the test set. Acc
 
     ## Accuracy on the test set: 75.09%
 
-Finally, we will find the model’s confusion matrix. Predicted labels run
-along the x axis and actual labels along the y axis.
+Finally, we will find the model’s confusion matrix. The confusion matrix plots the number of images of certain class against how many of that class the model predicted. For example, it would list how many of the vegeation images from the test set the model classified as SeaLake. Predicted labels run along the x axis and actual labels along the y axis.
 
     ## <Figure size 1000x800 with 0 Axes>
 
