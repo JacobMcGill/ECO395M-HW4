@@ -1,4 +1,4 @@
-\#Question 1
+\# Question 1
 
 ![](HW_4_files/figure-markdown_strict/unnamed-chunk-2-1.png)
 
