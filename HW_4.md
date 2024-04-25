@@ -386,5 +386,5 @@ along the x axis and actual labels along the y axis.
 <img src="HW_4_files/figure-markdown_strict/unnamed-chunk-25-23.png" width="960" />
 
 As can be seen above, the majority of incorrectly identified classes are
-in the double digits. However, there were 100 cases where PermanentCrop
-was predicted and the actual value was Vegetation.
+in the double digits. However, there were 153 cases where Forest
+was predicted and the actual value was SeaLake.
