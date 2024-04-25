@@ -366,7 +366,7 @@ optim.Adam(net.parameters()).
 
 ## Model Testing
 
-Now that the model is completed, we will test it on the test set.
+Now that the model is completed, we will test it's accuracy on the test set. Accuracy in this case is simply the percentage of images it correctly identified from the test set.
 
     ## Accuracy on the test set: 75.09%
 
